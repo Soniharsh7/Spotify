@@ -4,6 +4,7 @@ const passport = require('passport');
 const userModel = require('../models/userModel');
 const songModel = require('../models/songModel');
 const playlistModel = require('../models/playlistModel');
+const testModel = require('../models/test');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const id3 = require('node-id3');
@@ -11,11 +12,13 @@ const { Readable } = require('stream');
 const crypto = require('crypto');
 require('dotenv').config();
 
-mongoose.connect('mongodb+srv://manasrajput7470:korludag123@cluster0.mln49bw.mongodb.net/Music_App?retryWrites=true&w=majority').then(() => {
-  console.log("db connected");
-}).catch(err => {
-  console.log(err);
-})
+mongoose.connect('')
+  .then(() => {
+    console.log("db connected");
+  }).catch(err => {
+    console.log(err);
+  })
+
 
 const localStrategy = require('passport-local')
 passport.use(new localStrategy(userModel.authenticate()));
@@ -34,6 +37,23 @@ router.get('/', isLoggedIn, async function (req, res, next) {
     })
 
   res.render('index', { currentUser });
+});
+
+router.post("/createdata", async function (req, res) {
+  const data = await testModel.create({
+    title: req.body.title,
+    data: req.body.data
+  })
+    .then(function (data) {
+      res.send("data created successfully");
+    })
+})
+
+router.get('/allblogs', async function (req, res) {
+  var alldata = await testModel.find()
+    .then(function (data) {
+      res.send(data);
+    })
 });
 
 router.get('/auth', function (req, res, next) {
@@ -76,7 +96,7 @@ router.post('/uploadmusic', isLoggedIn, isAdmin, upload.array('song'), async fun
 
     await songModel.create({
       title: songData.title,
-      artist: songData.artist,  
+      artist: songData.artist,
       album: songData.album,
       size: file.size,
       poster: rdmName + 'poster',
@@ -140,7 +160,6 @@ router.get('/logout', function (req, res, next) {
   }
 })
 
-
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -200,7 +219,7 @@ router.post('/search', isLoggedIn, async (req, res, next) => {
 
 })
 
-router.get('/likeMusic/:songid', isLoggedIn, isLoggedIn, async function (req, res, next) {
+router.get('/likeMusic/:songid', isLoggedIn, async function (req, res, next) {
   const foundUser = await userModel.findOne({ username: req.session.passport.user })
   if (foundUser.likes.indexOf(req.params.songid) === -1) {
     foundUser.likes.push(req.params.songid);
